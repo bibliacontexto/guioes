@@ -82,7 +82,6 @@
             background: none; padding: 0; margin: 0 2px; display: inline-block; vertical-align: super;
         }
 
-        /* --- ESTILO DO POPUP E LINKS --- */
         #referencePopup {
             position: absolute; display: none; background: #333; color: #e0e0e0; border: 1px solid #555;
             border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); z-index: 1000; padding: 12px;
@@ -90,19 +89,18 @@
         }
         #referencePopupTitle { font-weight: bold; margin-bottom: 10px; color: #b0c4de; border-bottom: 1px solid #444; padding-bottom: 8px; }
 
-        /* Container de cada linha de link */
+
         .ref-link-item {
             display: flex;
             align-items: flex-start;
             margin-top: 10px;
         }
 
-        /* O número à esquerda (Não clicável, Não selecionável) */
         .ref-num-prefix {
-            color: #888; /* Cor cinza, diferente do link */
+            color: #888; 
             margin-right: 10px;
-            user-select: none; /* Impede seleção de texto */
-            pointer-events: none; /* Impede cliques */
+            user-select: none; 
+            pointer-events: none; 
             flex-shrink: 0;
             font-weight: normal;
         }
@@ -365,7 +363,7 @@
             }
         }
 
-        document.addEventListener('click', (e) => {
+     document.addEventListener('click', (e) => {
             const marker = e.target.closest('.ref-marker-popup');
             document.querySelectorAll('.atril-text-segment').forEach(el => el.classList.remove('active-underlined'));
             
@@ -377,7 +375,6 @@
                 if (ref) {
                     document.getElementById('referencePopupTitle').textContent = `[${ref.numero}] ${ref.titulo}`;
                     
-                    // --- GERAÇÃO DOS LINKS NO POPUP COM NÚMEROS SEPARADOS ---
                     document.getElementById('referencePopupUrls').innerHTML = ref.links.map((l, idx) => `
                         <div class="ref-link-item">
                             <span class="ref-num-prefix">${idx + 1}.</span>
@@ -386,12 +383,15 @@
                     ).join('');
                     
                     refPopup.style.display = 'block';
+
                     const rect = marker.getBoundingClientRect();
                     const crect = containerEl.getBoundingClientRect();
+
                     let left = rect.left - crect.left;
                     if (left + 350 > crect.width) left = crect.width - 370;
                     refPopup.style.left = Math.max(20, left) + 'px';
-                    refPopup.style.top = (rect.bottom - crect.top + window.scrollY + 10) + 'px';
+
+                    refPopup.style.top = (rect.bottom - crect.top + 10) + 'px';
                 }
             } else if (!e.target.closest('#referencePopup')) { 
                 refPopup.style.display = 'none'; 
