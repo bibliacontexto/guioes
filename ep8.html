@@ -69,6 +69,7 @@
             margin-bottom: 15px;
             text-align: left;
             border-left: 6px solid #3a7ca5;
+            padding-left: 188px;
             padding-left: 18px;
             line-height: 1.2;
         }
@@ -81,27 +82,40 @@
             background: none; padding: 0; margin: 0 2px; display: inline-block; vertical-align: super;
         }
 
-        /* ESTILO DO POPUP */
+        /* --- ESTILO DO POPUP E LINKS --- */
         #referencePopup {
             position: absolute; display: none; background: #333; color: #e0e0e0; border: 1px solid #555;
             border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.6); z-index: 1000; padding: 12px;
-            width: 320px; font-size: 0.85em; box-sizing: border-box; overflow-wrap: break-all;
+            width: 350px; font-size: 0.85em; box-sizing: border-box; overflow-wrap: break-all;
         }
         #referencePopupTitle { font-weight: bold; margin-bottom: 10px; color: #b0c4de; border-bottom: 1px solid #444; padding-bottom: 8px; }
-        
-        #referencePopupUrls a { 
-            display: block; 
-            color: #87cefa; 
-            text-decoration: none; 
-            margin-top: 10px; 
-            word-break: break-all; 
+
+        /* Container de cada linha de link */
+        .ref-link-item {
+            display: flex;
+            align-items: flex-start;
+            margin-top: 10px;
+        }
+
+        /* O número à esquerda (Não clicável, Não selecionável) */
+        .ref-num-prefix {
+            color: #888; /* Cor cinza, diferente do link */
+            margin-right: 10px;
+            user-select: none; /* Impede seleção de texto */
+            pointer-events: none; /* Impede cliques */
+            flex-shrink: 0;
+            font-weight: normal;
+        }
+
+        /* A hiperligação em si */
+        .ref-link-url {
+            color: #87cefa;
+            text-decoration: none;
+            word-break: break-all;
             line-height: 1.4;
         }
 
-        /* Efeito de sublinhado ao passar o mouse ou clicar */
-        #referencePopupUrls a:hover, 
-        #referencePopupUrls a:active,
-        #referencePopupUrls a:focus {
+        .ref-link-url:hover, .ref-link-url:active, .ref-link-url:focus {
             text-decoration: underline;
             color: #fff;
         }
@@ -109,8 +123,6 @@
         #selected-doc-references-container { margin-top: 50px; border-top: 1px solid #444; padding-top: 20px; }
         #selected-doc-references-list { list-style: none; padding: 0; }
         #selected-doc-references-list li { background: #252525; padding: 15px; margin-bottom: 12px; border-radius: 8px; font-size: 0.85em; }
-        #selected-doc-references-list a { color: #87cefa; text-decoration: none; }
-        #selected-doc-references-list a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -138,7 +150,6 @@
             <ul id="selected-doc-references-list"></ul>
         </div>
 
-        <!-- O PAINEL DE REFERÊNCIAS -->
         <div id="referencePopup">
             <div id="referencePopupTitle"></div>
             <div id="referencePopupUrls"></div>
@@ -157,7 +168,7 @@
         document.getElementById('incFont').onclick = () => { if (currentPercent < 200) { currentPercent += 10; updateFontSize(); } };
         document.getElementById('decFont').onclick = () => { if (currentPercent > 70) { currentPercent -= 10; updateFontSize(); } };
 
-        // --- LÓGICA DO PDF ---
+        // --- PDF LOGIC ---
         document.getElementById('btnPdf').onclick = async () => {
             if (!originalData) return;
             const { jsPDF } = window.jspdf;
@@ -265,32 +276,33 @@
 
             doc.addPage();
             cursorY = 25;
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(18);
-            doc.setTextColor(0, 0, 0);
+            doc.setFont("helvetica", "bold"); doc.setFontSize(18); doc.setTextColor(0, 0, 0);
             doc.text("Referências", margin, cursorY);
             cursorY += 15;
 
             originalData.referencias.forEach(ref => {
                 if (cursorY > 250) { doc.addPage(); cursorY = 25; }
                 refTargets[ref.numero] = { page: doc.internal.getNumberOfPages(), y: cursorY - 5 };
-                doc.setFontSize(12);
-                doc.setFont("helvetica", "bold");
-                doc.setTextColor(58, 124, 165);
-                const refTitle = `[${ref.numero}] ${ref.titulo}`;
-                doc.text(refTitle, margin, cursorY);
+                doc.setFontSize(12); doc.setFont("helvetica", "bold"); doc.setTextColor(58, 124, 165);
+                doc.text(`[${ref.numero}] ${ref.titulo}`, margin, cursorY);
                 const backPos = refReturnTargets[ref.numero];
                 if (backPos) { doc.link(margin, cursorY - 5, maxLineWidth, 7, { pageNumber: backPos.page, top: backPos.y }); }
                 cursorY += 7;
                 doc.setFont("helvetica", "normal");
-                doc.setTextColor(0, 0, 255);
                 ref.links.forEach((l, idx) => {
-                    const linkText = `${idx + 1}. ${l}`;
-                    const linkLines = doc.splitTextToSize(linkText, maxLineWidth - 10);
-                    linkLines.forEach(ll => {
+                    const prefix = `${idx + 1}. `;
+                    const linkText = l;
+                    if (cursorY > 280) { doc.addPage(); cursorY = 25; }
+                    doc.setTextColor(128, 128, 128);
+                    doc.text(prefix, margin + 5, cursorY);
+                    const prefixWidth = doc.getTextWidth(prefix);
+                    doc.setTextColor(0, 0, 255);
+                    const linkLines = doc.splitTextToSize(linkText, maxLineWidth - 15 - prefixWidth);
+                    linkLines.forEach((ll, iIdx) => {
                         if (cursorY > 280) { doc.addPage(); cursorY = 25; }
-                        doc.text(ll, margin + 5, cursorY);
-                        doc.link(margin + 5, cursorY - 4, doc.getTextWidth(ll), 5, { url: l });
+                        const currentX = (iIdx === 0) ? (margin + 5 + prefixWidth) : (margin + 5 + prefixWidth);
+                        doc.text(ll, currentX, cursorY);
+                        doc.link(currentX, cursorY - 4, doc.getTextWidth(ll), 5, { url: l });
                         cursorY += 6;
                     });
                 });
@@ -315,7 +327,6 @@
 
         async function loadLocalJson() {
             try {
-                // Certifique-se de que o arquivo js/ep8.json existe
                 const response = await fetch('js/ep8.json');
                 const data = await response.json();
                 originalData = data;
@@ -333,10 +344,8 @@
                 if (!content) return "";
                 const textOnly = content.replace(/\[\[|\]\]|\[\d+\]/g, "");
                 const isSub = textOnly.length > 4 && textOnly === textOnly.toUpperCase() && /[A-ZÀ-Ú]/.test(textOnly);
-                
                 content = content.replace(/\[\[(.*?)\]\]\[(\d+)\]/g, `<span class="atril-text-segment" data-ref-link="$2">$1</span><sup class="ref-marker-popup" data-ref-num="$2">[$2]</sup>`);
                 content = content.replace(/(?<!<\/span>)\[(\d+)\]/g, `<sup class="ref-marker-popup" data-ref-num="$1">[$1]</sup>`);
-                
                 return isSub ? `<div class="atril-subheading">${content}</div>` : `<p>${content}</p>`;
             }).filter(h => h !== "").join('');
 
@@ -348,10 +357,9 @@
                         <span style="color:#3a7ca5; font-weight:bold;">[${ref.numero}]</span> 
                         <strong>${ref.titulo}</strong>
                         ${ref.links.map((l, idx) => `
-                            <div style="margin-top:5px;">
-                                <a href="${l}" target="_blank">
-                                    ${idx + 1}. ${l}
-                                </a>
+                            <div class="ref-link-item">
+                                <span class="ref-num-prefix">${idx + 1}.</span>
+                                <a href="${l}" target="_blank" class="ref-link-url">${l}</a>
                             </div>`).join('')}
                     </li>`).join('');
             }
@@ -359,29 +367,29 @@
 
         document.addEventListener('click', (e) => {
             const marker = e.target.closest('.ref-marker-popup');
-            
-            // Limpa realces anteriores
             document.querySelectorAll('.atril-text-segment').forEach(el => el.classList.remove('active-underlined'));
             
             if (marker) {
                 const num = marker.dataset.refNum;
                 const linkedText = document.querySelector(`.atril-text-segment[data-ref-link="${num}"]`);
                 if (linkedText) linkedText.classList.add('active-underlined');
-                
                 const ref = referencesMap[num];
                 if (ref) {
                     document.getElementById('referencePopupTitle').textContent = `[${ref.numero}] ${ref.titulo}`;
                     
-                    // AQUI: Adicionada a numeração (idx + 1) nos links do painel
-                    document.getElementById('referencePopupUrls').innerHTML = ref.links.map((l, idx) => 
-                        `<a href="${l}" target="_blank">${idx + 1}. ${l}</a>`
+                    // --- GERAÇÃO DOS LINKS NO POPUP COM NÚMEROS SEPARADOS ---
+                    document.getElementById('referencePopupUrls').innerHTML = ref.links.map((l, idx) => `
+                        <div class="ref-link-item">
+                            <span class="ref-num-prefix">${idx + 1}.</span>
+                            <a href="${l}" target="_blank" class="ref-link-url">${l}</a>
+                        </div>`
                     ).join('');
                     
                     refPopup.style.display = 'block';
                     const rect = marker.getBoundingClientRect();
                     const crect = containerEl.getBoundingClientRect();
                     let left = rect.left - crect.left;
-                    if (left + 320 > crect.width) left = crect.width - 340;
+                    if (left + 350 > crect.width) left = crect.width - 370;
                     refPopup.style.left = Math.max(20, left) + 'px';
                     refPopup.style.top = (rect.bottom - crect.top + window.scrollY + 10) + 'px';
                 }
