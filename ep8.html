@@ -105,7 +105,6 @@
             font-weight: normal;
         }
 
-        /* A hiperligação em si */
         .ref-link-url {
             color: #87cefa;
             text-decoration: none;
@@ -166,7 +165,6 @@
         document.getElementById('incFont').onclick = () => { if (currentPercent < 200) { currentPercent += 10; updateFontSize(); } };
         document.getElementById('decFont').onclick = () => { if (currentPercent > 70) { currentPercent -= 10; updateFontSize(); } };
 
-        // --- PDF LOGIC ---
         document.getElementById('btnPdf').onclick = async () => {
             if (!originalData) return;
             const { jsPDF } = window.jspdf;
